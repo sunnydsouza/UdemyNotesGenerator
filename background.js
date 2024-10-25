@@ -1,0 +1,112 @@
+// background.js
+
+async function generateNotes(transcriptText, apiKey, model, tabId) {
+  console.log("Generating notes for the transcript:", transcriptText);
+
+  // Extract the course title from the page in the context of the tab
+  const courseTitle = await new Promise((resolve, reject) => {
+    chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      function: () => {
+        // Target the inner div that contains the useful title information
+        const currentItem = document.querySelector('li[class*="curriculum-item-link--is-current"] div[class*="curriculum-item-link--item-container-"]');
+        if (currentItem) {
+          let title = currentItem.innerText;
+
+          // Further clean up any extra newlines or spaces
+          title = title.split('\n').filter(line => line.trim() !== '').join(' ');
+
+          return title;
+        }
+        return 'Unknown Course Title';
+      }
+    }, (injectionResults) => {
+      if (injectionResults && injectionResults.length > 0) {
+        resolve(injectionResults[0].result);
+      } else {
+        reject('Failed to extract course title');
+      }
+    });
+  });
+
+  const apiEndpoint = "https://api.openai.com/v1/chat/completions";
+  const messages = [
+    {
+      role: "system",
+      content: `You are a helpful Student Notes taking Assistant. Today's date is ${new Date().toISOString().slice(0, 10)}.`
+    },
+    {
+      role: "assistant",
+      content: `Ok.`
+    },
+    {
+      role: "user",
+      content: `Generate Markdown Notes\nDescription: Convert the following transcript into detailed notes with code examples in markdown format.\n---\n${transcriptText}\n---\nConsidering the student is a novice.\n Wherever possible use a analogy to explain the concept. Also, generate mermaidjs mardown based diagrams wherever possible.`
+    }
+  ];
+
+  try {
+    const response = await fetch(apiEndpoint, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: messages,
+      }),
+    });
+
+    const data = await response.json();
+    const generatedNotes = data.choices[0].message.content;
+
+    // Prepend course title to the generated notes
+    const finalNotes = `## ${courseTitle}\n\n${generatedNotes}`;
+    return finalNotes;
+
+  } catch (error) {
+    console.error("Error generating notes:", error);
+    throw error;
+  }
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "generateNotes") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0].id; // Capture the current tab ID
+
+      chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function: () => {
+          // Extract transcript from the page
+          const xpath = '//*[@id="ct-sidebar-scroll-container"]/div';
+          let element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+          return element ? element.innerText : 'Transcript not found.';
+        },
+      }, async (injectionResults) => {
+        // Fetch API key and GPT model from storage
+        chrome.storage.sync.get(['openAIKey', 'gptModel'], async (data) => {
+          const apiKey = data.openAIKey;
+          const model = data.gptModel || 'text-davinci-003'; // Default model is text-davinci-003
+
+          if (!apiKey) {
+            console.error('API key is not set. Please set the API key in the options page.');
+            return;
+          }
+
+          for (const frameResult of injectionResults) {
+            try {
+              const notes = await generateNotes(frameResult.result, apiKey, model, tabId); // Pass tabId to generateNotes
+              sendResponse({ notes: notes });
+            } catch (error) {
+              console.error('Error generating notes:', error);
+            }
+          }
+        });
+      });
+    });
+    return true; // Indicates asynchronous response
+  }
+});
+

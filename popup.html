@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="styles/popup.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>Notes Summary</title>
+</head>
+<body>
+    <div id="content">
+        <div id="actionArea">
+            <button id="generateMarkdown">Generate Course Markdown</button>
+            <button id="generate">Re/Generate Notes</button>
+            <div id="loading" style="display:none;"></div>
+        </div>
+        <div id="notes" placeholder="Notes will be generated here..."></div>
+        <div id="navigation" style="display:none;">
+            <button id="prevNote"><span class="material-icons">navigate_before</span></button>
+            <span id="noteIndex">0/0</span>
+            <button id="nextNote"><span class="material-icons">navigate_next</span></button>
+        </div>
+        <button id="copy" style="display:none;"><span class="material-icons">content_copy</span></button>
+        <!-- <button id="regenerate" style="display:none;">Regenerate</button> -->
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
