@@ -8,17 +8,22 @@ async function generateNotes(transcriptText, apiKey, model, tabId) {
     chrome.scripting.executeScript({
       target: { tabId: tabId },
       function: () => {
-        // Target the inner div that contains the useful title information
+        // Target the lecture item that is currently active
         const currentItem = document.querySelector('li[class*="curriculum-item-link--is-current"] div[class*="curriculum-item-link--item-container-"]');
+
         if (currentItem) {
-          let title = currentItem.innerText;
+          // Use explicit selectors to extract the title and duration
+          const lectureTitleElem = currentItem.querySelector('div.curriculum-item-link--curriculum-item-title--VBsdR span');
+          const lectureDurationElem = currentItem.querySelector('div.curriculum-item-link--metadata--XK804 span');
 
-          // Further clean up any extra newlines or spaces
-          title = title.split('\n').filter(line => line.trim() !== '').join(' ');
-
-          return title;
+          if (lectureTitleElem && lectureDurationElem) {
+            const lectureTitle = lectureTitleElem.innerText.trim();
+            const lectureDuration = lectureDurationElem.innerText.trim();
+            return `Lecture ${lectureTitle} (${lectureDuration})`;
+          }
         }
-        return 'Unknown Course Title';
+
+        return 'Unknown Lecture Title';
       }
     }, (injectionResults) => {
       if (injectionResults && injectionResults.length > 0) {

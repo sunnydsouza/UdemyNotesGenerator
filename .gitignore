@@ -1,2 +1,5 @@
 images/archive/*
 README copy.md
+markdown-backend/node_modules/*
+.DS_Store
+notes/*
