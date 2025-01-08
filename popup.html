@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <link rel="stylesheet" type="text/css" href="styles/popup.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>Notes Summary</title>
 </head>
+
 <body>
     <div id="content">
+        <div>
+            <label for="folderLocation">Base Folder Location:</label>
+            <input type="text" id="folderLocation" placeholder="/path/to/course/folder">
+        </div>
         <div id="actionArea">
             <button id="generateMarkdown">Generate Course Markdown</button>
             <button id="generate">Re/Generate Notes</button>
+
             <div id="loading" style="display:none;"></div>
         </div>
         <div id="notes" placeholder="Notes will be generated here..."></div>
@@ -19,8 +26,9 @@
             <button id="nextNote"><span class="material-icons">navigate_next</span></button>
         </div>
         <button id="copy" style="display:none;"><span class="material-icons">content_copy</span></button>
-        <!-- <button id="regenerate" style="display:none;">Regenerate</button> -->
+        <button id="saveToMd" style="display:none;">Save/Update .md file</button>
     </div>
     <script src="popup.js"></script>
 </body>
+
 </html>

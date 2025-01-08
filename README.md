@@ -7,6 +7,7 @@ With the extension, you can:
 - Automatically generate markdown outlines for any Udemy courses.
 - Extract detailed notes for the currently playing lecture based on the transcript.
 - Save and navigate through the history of generated notes for easy reference.
+- Save markdown notes directly to a structured folder hierarchy.
 
 ---
 
@@ -14,6 +15,7 @@ With the extension, you can:
 
 - **Course Structure as Markdown**: Automatically generate a markdown structure of all course sections, lectures, and durations.
 - **Lecture Notes from Transcripts**: Generate detailed notes for the current lecture based on its transcript, and prepend the course title to the generated notes.
+- **Automatic Folder and File Organization**: Automatically create a structured folder hierarchy for your course, with sections as folders and lectures as .md files.
 - **History Navigation for Notes**: All generated notes are saved for each lecture, allowing users to **navigate** through the history of generated notes using buttons like `<1/2>`, making it easy to switch between different versions of notes.
 - **Copy Markdown Button**: A dedicated "Copy" button below the generated markdown allows you to quickly copy the markdown content and paste it into any note-taking app or editor.
 - **Two Distinct Buttons**:
@@ -21,6 +23,20 @@ With the extension, you can:
   - **Re/Generate Notes**: This button generates or regenerates detailed notes for the current lecture based on its transcript.
 - **Automatic Section Expansion**: The extension automatically expands collapsed sections to ensure all course content is included in the markdown output.
 - **Easy-to-Use Interface**: The interface provides users with a clear and intuitive experience, displaying the generated markdown and allowing easy navigation through past notes.
+
+---
+
+## New Functionality: Save Markdown to Organized Folders
+
+The extension now supports saving notes directly to structured folders:
+- **Sections as Folders**: Each course section (e.g., `## Section 1: Introduction`) becomes a folder.
+- **Lectures as `.md` Files**: Each lecture (e.g., `**Lecture 1: Introduction (5 min)**`) is saved as an individual `.md` file within its corresponding section folder.
+- **Automatic Course Structure Creation**: The extension generates the folder structure based on the course content if it doesn't already exist.
+
+**Workflow**:
+1. The "Save to .md" button extracts the current lecture's title from the markdown content.
+2. The file is saved to the appropriate section folder, creating the folder hierarchy if needed.
+3. This new functionality requires a running backend, the code for which is in within the `markdown-backend`. Check `Installation` section for more details.
 
 ---
 
@@ -44,7 +60,14 @@ With the extension, you can:
 
 5. **Copy the Markdown**: After generating notes, click the **Copy** button to copy the markdown output. This is particularly useful for pasting into markdown editors, note-taking apps like Notion or Obsidian, or even into documents.
 
-6. **Navigate the History of Notes**: After regenerating notes for a lecture, you can use the **navigation buttons** (like `<1/2>`) to move through the history of generated notes for that specific lecture. This allows you to switch between versions of notes easily.
+6. **Save Markdown to `.md`**:
+   - After generating notes or course markdown, click the "Save to .md" button.
+   - The extension will:
+     - Automatically create the course folder structure if it doesn’t already exist.
+     - Save the notes as a `.md` file in the appropriate section folder.
+     - Pre-fill and reuse the base folder location for all subsequent saves within the same course.
+
+7. **Navigate the History of Notes**: After regenerating notes for a lecture, you can use the **navigation buttons** (like `<1/2>`) to move through the history of generated notes for that specific lecture. This allows you to switch between versions of notes easily.
 
 ---
 
@@ -76,7 +99,11 @@ The **popup.html** file is the main user interface of the extension. This popup 
    - A dedicated "Copy" button is provided below the markdown display. When clicked, it copies the displayed markdown to the user's clipboard, allowing for quick pasting into markdown editors or note-taking apps.
    - **How It Works**: The button copies the markdown displayed in the output area, making it easy for users to move the content to other applications.
 
-5. **History Navigation Buttons**:
+5. **Save to `.md` Button**:
+   - Saves the currently displayed markdown to the appropriate folder and file.
+   - Automatically creates the folder structure if it doesn’t already exist.
+
+6. **History Navigation Buttons**:
    - These buttons (`<1/2>`, `<2/2>`, etc.) allow users to navigate through the history of generated notes for each lecture. Every time you regenerate notes for a lecture, a new version is saved, and you can easily switch between versions by clicking these buttons.
    - **How It Works**: Users can click on the navigation buttons to move between the previous versions of the notes for the current lecture, ensuring they can always retrieve past notes.
 
@@ -120,6 +147,7 @@ The **options.html** page is designed to allow users to configure future setting
    - Click the extension icon in the Chrome toolbar.
    - Use the **"Generate Course Markdown"** button to generate a markdown outline of the course or **"Re/Generate Notes"** to create lecture notes based on the transcript.
 
+4. For `Save to .md` functionality, you need to run the backend server. The code for the backend server is in the `markdown-backend` folder. Follow the instructions in the `markdown-backend` folder to run the backend server.
 
 
 ---
