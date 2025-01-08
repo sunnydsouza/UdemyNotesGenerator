@@ -136,6 +136,8 @@ document.getElementById('generateMarkdown').addEventListener('click', function()
         const markdown = results[0].result;
         // document.getElementById('notesTextarea').value = markdown;
         document.getElementById('notes').innerText = markdown;
+        toggleLoading(false);
+        toggleButtons(true); 
       });
     });
   });
