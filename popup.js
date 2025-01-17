@@ -33,6 +33,23 @@ document.getElementById('copy').addEventListener('click', () => {
 // Navigation buttons event listeners
 document.getElementById('prevNote').addEventListener('click', () => navigateNotes(-1));
 document.getElementById('nextNote').addEventListener('click', () => navigateNotes(1));
+document.getElementById('prevItem').addEventListener('click', () => navigateToItem('previous'));
+document.getElementById('nextItem').addEventListener('click', () => navigateToItem('next'));
+
+function navigateToItem(direction) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.scripting.executeScript({
+            target: { tabId: tabs[0].id },
+            function: (direction) => {
+                const xpath = direction === 'previous' ? '//*[@id="go-to-previous-item"]' : '//*[@id="go-to-next-item"]';
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (element) {
+                    element.click();
+                }
+            }
+        });
+    });
+}
 
 let currentIndex = 0; // To track the current index of the note being displayed
 
@@ -439,5 +456,3 @@ async function saveLectureMarkdown(courseStructure, baseFolder, markdownContent)
 
     alert(`Lecture saved successfully under ${sectionFolder}!`);
 }
-
-
