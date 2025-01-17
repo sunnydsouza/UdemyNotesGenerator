@@ -1,17 +1,37 @@
-// Save the API key and GPT model
-document.getElementById('optionsForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const openAIKey = document.getElementById('openAIKey').value;
-    const gptModel = document.getElementById('gptModel').value;
-    chrome.storage.sync.set({ openAIKey, gptModel }, function() {
-        console.log('OpenAI API Key and GPT model saved.');
-    });
-});
+document.addEventListener('DOMContentLoaded', restoreOptions);
+document.getElementById('optionsForm').addEventListener('submit', saveOptions);
 
-// Load the API key and GPT model on options page load
-document.addEventListener('DOMContentLoaded', function() {
-    chrome.storage.sync.get(['openAIKey', 'gptModel'], function(data) {
-        document.getElementById('openAIKey').value = data.openAIKey || '';
-        document.getElementById('gptModel').value = data.gptModel || 'text-davinci-003';
+function saveOptions(event) {
+    event.preventDefault();
+
+    const options = {
+        gptModel: document.getElementById('gptModel').value,
+        openAIKey: document.getElementById('openAIKey').value,
+        autoGenerate: document.getElementById('autoGenerate').checked,
+        showTranscript: document.getElementById('showTranscript').checked,
+        showCourseContent: document.getElementById('showCourseContent').checked
+    };
+
+    chrome.storage.sync.set(options, () => {
+        alert('Options saved.');
     });
-});
+}
+
+function restoreOptions() {
+    chrome.storage.sync.get(
+        {
+            gptModel: 'gpt-4o',  // Default value
+            openAIKey: '',
+            autoGenerate: false, // Default value
+            showTranscript: false, // Default value
+            showCourseContent: false // Default value
+        },
+        (options) => {
+            document.getElementById('gptModel').value = options.gptModel || 'gpt-4o';
+            document.getElementById('openAIKey').value = options.openAIKey || '';
+            document.getElementById('autoGenerate').checked = options.autoGenerate;
+            document.getElementById('showTranscript').checked = options.showTranscript;
+            document.getElementById('showCourseContent').checked = options.showCourseContent;
+        }
+    );
+}

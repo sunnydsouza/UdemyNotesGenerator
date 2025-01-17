@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <link rel="stylesheet" type="text/css" href="styles/popup.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>Notes Summary</title>
 </head>
-
 <body>
     <div id="content">
         <div>
@@ -14,23 +12,23 @@
             <input type="text" id="folderLocation" placeholder="/path/to/course/folder">
         </div>
         <div id="actionArea">
-            <button id="generateMarkdown">Generate Course Markdown</button>
-            <button id="generate">Re/Generate Notes</button>
-            <button id="prevItem"><span class="material-icons">navigate_before</span></button>
-            <button id="nextItem"><span class="material-icons">navigate_next</span></button>
-
+            <button id="prevItem" title="Previous Lecture"><span class="material-icons">navigate_before</span>Prev</button>
+            <button id="generate" title="Re/Generate Notes for current lecture">Generate(re) notes</button>
+            <button id="nextItem" title="Next Lecture"><span class="material-icons">navigate_next</span>Next</button>
             <div id="loading" style="display:none;"></div>
         </div>
-        <div id="notes" placeholder="Notes will be generated here..."></div>
-        <div id="navigation" style="display:none;">
-            <button id="prevNote"><span class="material-icons">navigate_before</span></button>
+        
+        <!-- Compact and aligned button group -->
+        <div id="buttonGroup">
+            <button id="prevNote" title="Previous Note"><span class="material-icons">navigate_before</span></button>
             <span id="noteIndex">0/0</span>
-            <button id="nextNote"><span class="material-icons">navigate_next</span></button>
+            <button id="nextNote" title="Next Note"><span class="material-icons">navigate_next</span></button>
+            <button id="copy" title="Copy Notes"><span class="material-icons">content_copy</span></button>
+            <button id="saveToMd" title="Save/Update .md File">Save/Update .md file</button>
         </div>
-        <button id="copy" style="display:none;"><span class="material-icons">content_copy</span></button>
-        <button id="saveToMd" style="display:none;">Save/Update .md file</button>
+        
+        <div id="notes" placeholder="Notes will be generated here..."></div>
     </div>
     <script src="popup.js"></script>
 </body>
-
 </html>

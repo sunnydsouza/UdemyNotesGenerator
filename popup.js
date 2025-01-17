@@ -1,4 +1,15 @@
 // popup.js
+// Function to handle incoming messages
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'displayNotes') {
+        const notesElement = document.getElementById('notes');
+        if (notesElement) {
+            notesElement.innerText = request.notes;
+        }
+    }
+    sendResponse({});
+});
+
 function toggleLoading(show) {
     document.getElementById('loading').style.display = show ? 'inline' : 'none';
 }
@@ -40,16 +51,28 @@ function navigateToItem(direction) {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
-            function: (direction) => {
-                const xpath = direction === 'previous' ? '//*[@id="go-to-previous-item"]' : '//*[@id="go-to-next-item"]';
-                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            func: (direction) => {
+
+                const xpath = direction === 'previous' ?
+                    '//*[@id="go-to-previous-item"]' :
+                    '//*[@id="go-to-next-item"]';
+                const element = document.evaluate(
+                    xpath,
+                    document,
+                    null,
+                    XPathResult.FIRST_ORDERED_NODE_TYPE,
+                    null
+                ).singleNodeValue;
+
                 if (element) {
                     element.click();
                 }
-            }
+            },
+            args: [direction]
         });
     });
 }
+
 
 let currentIndex = 0; // To track the current index of the note being displayed
 
