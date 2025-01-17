@@ -1,0 +1,18 @@
+site_name: Markdown Backend Documentation
+nav:
+  - Introduction: index.md
+  - Installation: installation.md
+  - Architecture: architecture.md
+  - API Endpoints:
+      - Create File: api/create_file.md
+      - Create Folder: api/create_folder.md
+      - Get Course Structure: api/get_course_structure.md
+      - Save Markdown: api/save_markdown.md
+  - Utilities: utilities.md
+  - Configuration: configuration.md
+  - Usage: usage.md
+  - Development: development.md
+  - Testing: testing.md
+  - Deployment: deployment.md
+  - Troubleshooting: troubleshooting.md
+  - Appendix: appendix.md
