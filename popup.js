@@ -11,26 +11,54 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function toggleLoading(show) {
-    document.getElementById('loading').style.display = show ? 'inline' : 'none';
+    const loadingElement = document.getElementById('loading');
+    const notesElement = document.getElementById('notes');
+    
+    loadingElement.style.display = show ? 'block' : 'none';
+    
+    // Disable and grey out the notes area
+    notesElement.style.pointerEvents = show ? 'none' : 'auto';
+    notesElement.style.opacity = show ? '0.5' : '1';
 }
+
+// The rest of your JavaScript remains unchanged...
 
 function toggleButtons(show) {
-    document.getElementById('copy').style.display = show ? 'block' : 'none';
-    document.getElementById('saveToMd').style.display = show ? 'block' : 'none';
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => button.disabled = !show);
 }
 
-
+// Update the event listener for the generate button
 document.getElementById('generate').addEventListener('click', () => {
     toggleLoading(true);
+    toggleButtons(false); // Disable all buttons
+
+    // Set a timeout for the max loading time
+    const timeoutId = setTimeout(() => {
+        toggleLoading(false);
+        toggleButtons(true);
+        alert('Note generation timed out. Please try again.');
+    }, 30000); // Max wait time of 30 seconds
+
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         const currentUrl = tabs[0].url;
         chrome.runtime.sendMessage({ action: "generateNotes", url: currentUrl }, (response) => {
-            updateNotesDisplay(response.notes, currentUrl);
-            toggleLoading(false);
-            toggleButtons(true);
+            clearTimeout(timeoutId); // Clear the timeout on success
+            toggleLoading(false); // Hide loading spinner
+
+            // Ensure response is valid before updating display
+            if (response && response.notes) {
+                updateNotesDisplay(response.notes, currentUrl);
+            } else {
+                alert('No notes generated or there was an error.');
+            }
+
+            toggleButtons(true); // Re-enable buttons after processing
         });
     });
 });
+
+
 
 document.getElementById('copy').addEventListener('click', () => {
     const notes = document.getElementById('notes').innerText;
@@ -157,16 +185,19 @@ function loadNotesForUrl(url) {
     });
 }
 
+// Ensure `toggleNavigation` is called correctly
 function displayNotes(notes, index, total) {
-    // Update notes display and navigation UI
     document.getElementById('notes').innerText = notes;
     document.getElementById('noteIndex').innerText = `${index + 1}/${total}`;
     currentIndex = index;
-    toggleNavigation(total > 1); // Show navigation if there are multiple notes
+    toggleNavigation(total > 1);
 }
 
 function toggleNavigation(show) {
-    document.getElementById('navigation').style.display = show ? 'block' : 'none';
+    const navigation = document.getElementById('navigation');
+    if (navigation) {
+        navigation.style.display = show ? 'inline' : 'none';
+    }
 }
 
 function navigateNotes(direction) {
@@ -186,23 +217,6 @@ function navigateNotes(direction) {
 }
 
 
-// Listener for the button click
-document.getElementById('generateMarkdown').addEventListener('click', function () {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        chrome.scripting.executeScript({
-            target: { tabId: tabs[0].id },
-            function: extractCourseContent
-        }, (results) => {
-            const markdown = results[0].result;
-            // document.getElementById('notesTextarea').value = markdown;
-            document.getElementById('notes').innerText = markdown;
-            toggleLoading(false);
-            toggleButtons(true);
-        });
-    });
-});
-
-// This function runs in the context of the page and extracts the course structure
 function extractCourseContent() {
     console.log("extractCourseContent");
 
@@ -290,31 +304,36 @@ function saveFolderLocation(courseUrl, folderLocation) {
     });
 }
 
+
 document.getElementById('saveToMd').addEventListener('click', async () => {
     const markdownContent = document.getElementById('notes').innerText.trim();
 
+    // Reset status indicators
+    document.getElementById('successTick').style.display = 'none';
+    document.getElementById('errorCross').style.display = 'none';
+
     if (!markdownContent) {
-        alert("No markdown content available to save.");
+        document.getElementById('errorCross').innerText = "No markdown content available to save.";
+        document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
         return;
     }
 
     const courseUrl = await getCourseUrlFromTab();
-    // const folderLocation = await getFolderLocation(courseUrl);
-
-    // if (!folderLocation) {
-    //     alert("Please set a folder location for the course.");
-    //     return;
-    // }
-
-    // const courseStructure = await loadCourseStructure(courseUrl, folderLocation); // Load the course structure from backend or storage
-    // await saveLectureMarkdown(courseStructure, folderLocation, markdownContent);
     getFolderLocation(courseUrl, async (folderLocation) => {
         if (!folderLocation) {
+            document.getElementById('errorCross').innerText = "User did not provide a folder location.";
+            document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
             return; // User did not provide a folder location
         }
 
-        const courseStructure = await loadCourseStructure(courseUrl, folderLocation); // Load the course structure
-        await saveLectureMarkdown(courseStructure, folderLocation, markdownContent);
+        try {
+            const courseStructure = await loadCourseStructure(courseUrl, folderLocation); // Load the course structure
+            await saveLectureMarkdown(courseStructure, folderLocation, markdownContent);
+            document.getElementById('successTick').style.display = 'inline'; // Show success indicator
+        } catch (error) {
+            document.getElementById('errorCross').innerText = "Error saving lecture markdown.";
+            document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
+        }
     });
 });
 
@@ -448,13 +467,21 @@ async function createFile(path, content) {
     });
 }
 
+
+
 async function saveLectureMarkdown(courseStructure, baseFolder, markdownContent) {
     // Extract lecture title from the first line
     const firstLine = markdownContent.split('\n')[0];
     const lectureTitle = firstLine.startsWith('##') ? firstLine.replace('##', '').trim() : null;
+
+    // Reset status indicators
+    document.getElementById('successTick').style.display = 'none';
+    document.getElementById('errorCross').style.display = 'none';
+
     if (!lectureTitle) {
-        alert("Invalid markdown content. Lecture title not found.");
-        return;
+        document.getElementById('errorCross').innerText = "Invalid markdown content. Lecture title not found.";
+        document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
+        return; // Exit if no title
     }
 
     // Find the section folder containing this lecture
@@ -469,13 +496,100 @@ async function saveLectureMarkdown(courseStructure, baseFolder, markdownContent)
     }
 
     if (!sectionFolder) {
-        alert("Section for this lecture not found.");
-        return;
+        document.getElementById('errorCross').innerText = "Section for this lecture not found.";
+        document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
+        return; // Exit if section not found
     }
 
     // Save the markdown file under the correct section folder
     const lecturePath = `${baseFolder}/${sectionFolder}/${sanitizedLectureTitle}`;
-    await createFile(lecturePath, markdownContent);
-
-    alert(`Lecture saved successfully under ${sectionFolder}!`);
+    
+    try {
+        await createFile(lecturePath, markdownContent);
+        document.getElementById('successTick').style.display = 'inline'; // Show success indicator
+    } catch (error) {
+        document.getElementById('errorCross').innerText = "Error saving lecture markdown.";
+        document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
+    }
 }
+
+document.getElementById('autoGenerate').addEventListener('change', (event) => {
+    if (event.target.checked) {
+        generateAndSaveNotesAutomatically();
+    }
+});
+
+
+
+function generateAndSaveNotesAutomatically() {
+    // Simulate a click on the Generate button
+    document.getElementById('generate').click();
+
+    // Set a timeout for when to check for notes being generated
+    setTimeout(() => {
+        const loadingElement = document.getElementById('loading');
+        
+        // Check that loading is not visible
+        if (loadingElement.style.display === 'none') {
+            const notesGenerated = document.getElementById('notes').innerText.trim();
+
+            if (notesGenerated) {
+                // If notes are generated, simulate the save process
+                document.getElementById('saveToMd').click(); // Click to save as .md
+
+                // After saving, navigate to the next item
+                setTimeout(() => {
+                    navigateToItem('next');
+
+                    // Check if auto-generate is still enabled, if yes, call again
+                    if (document.getElementById('autoGenerate').checked) {
+                        setTimeout(generateAndSaveNotesAutomatically, 3000); // Delay before repeating
+                    }
+                }, 2000); // Allow some time for saving process, adjust as needed
+            } else {
+                // If notes are not generated yet, check again after some time
+                setTimeout(generateAndSaveNotesAutomatically, 3000); // Re-check after 3 seconds
+            }
+        } else {
+            // If loading is still visible, check again after a delay
+            setTimeout(generateAndSaveNotesAutomatically, 3000); // Re-check after 3 seconds
+        }
+    }, 3000); // Initial check after generating notes
+}
+
+// Add event listener for Show Course Data button
+document.getElementById('showCourseData').addEventListener('click', () => {
+    chrome.storage.local.get(null, (data) => {
+        console.log("Stored Data:", data);
+        // Optionally, you could show this data in a more user-friendly way in your UI:
+        // const notesElement = document.getElementById('notes');
+        // if (notesElement) {
+        //     notesElement.innerText = JSON.stringify(data, null, 2); // Show structured data
+        // }
+    });
+});
+
+// Existing event listener for Clear Course Data button
+document.getElementById('clearCourseData').addEventListener('click', async () => {
+    const courseUrl = await getCourseUrlFromTab(); // Fetch the course URL
+
+    if (courseUrl) {
+        // Retrieve all keys to find and remove data for this specific course URL
+        chrome.storage.local.get(null, (data) => {
+            const keysToRemove = Object.keys(data).filter(key => key.startsWith(courseUrl));
+            
+            if (keysToRemove.length > 0) {
+                chrome.storage.local.remove(keysToRemove, () => {
+                    console.log(`Cleared course data for: ${courseUrl}`);
+                    alert(`Course data cleared for: ${courseUrl}`);
+                });
+            } else {
+                alert(`No data found for: ${courseUrl}`);
+            }
+        });
+    } else {
+        alert("No valid course URL found.");
+    }
+});
+
+

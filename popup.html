@@ -12,23 +12,52 @@
             <input type="text" id="folderLocation" placeholder="/path/to/course/folder">
         </div>
         <div id="actionArea">
-            <button id="prevItem" title="Previous Lecture"><span class="material-icons">navigate_before</span>Prev</button>
-            <button id="generate" title="Re/Generate Notes for current lecture">Generate(re) notes</button>
-            <button id="nextItem" title="Next Lecture"><span class="material-icons">navigate_next</span>Next</button>
-            <div id="loading" style="display:none;"></div>
+            <button id="prevItem" title="Previous Lecture"><span class="material-icons">navigate_before</span>
+                Prev</button>
+            <button id="generate" title="Re/Generate Notes for current lecture">
+                <span class="material-icons">auto_fix_high</span> Generate(re) notes
+            </button>
+            <button id="nextItem" title="Next Lecture"><span class="material-icons">navigate_next</span> Next</button>
         </div>
-        
-        <!-- Compact and aligned button group -->
-        <div id="buttonGroup">
-            <button id="prevNote" title="Previous Note"><span class="material-icons">navigate_before</span></button>
-            <span id="noteIndex">0/0</span>
-            <button id="nextNote" title="Next Note"><span class="material-icons">navigate_next</span></button>
-            <button id="copy" title="Copy Notes"><span class="material-icons">content_copy</span></button>
-            <button id="saveToMd" title="Save/Update .md File">Save/Update .md file</button>
+
+        <!-- New toggle button for automation -->
+        <div>
+            <label for="autoGenerate">Automate Notes Till End:</label>
+            <label class="switch">
+                <input type="checkbox" id="autoGenerate">
+                <span class="slider"></span>
+            </label>
         </div>
-        
-        <div id="notes" placeholder="Notes will be generated here..."></div>
+
+        <!-- New buttons for showing and clearing course data -->
+        <div id="dataActions">
+            <button id="showCourseData" class="nav-link" title="Show Course Data">Show Course Data</button>
+            <button id="clearCourseData" class="nav-link" title="Clear Course Data">Clear Course Data</button>
+        </div>
+
+        <div id="controlLinks" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center;">
+                <div id="loading" style="display:none;"></div>
+                <span id="prevNote" class="nav-link" title="Previous Note">&lt;</span>
+                <span id="noteIndex">0/0</span>
+                <span id="nextNote" class="nav-link" title="Next Note" style="margin-left: 0px;">&gt;</span>
+            </div>
+            <div>
+                <span id="copy" class="nav-link" title="Copy Notes"><span
+                        class="material-icons">content_copy</span></span>
+                <span id="saveToMd" class="nav-link" title="Save/Update .md File"><span
+                        class="material-icons">save</span></span>
+
+                <span id="successTick" style="color:green; display:none;">✅</span>
+                <span id="errorCross" style="color:red; display:none;">❌</span>
+            </div>
+        </div>
+
+        <div id="notes" class="notes-container" placeholder="Notes will be generated here...">
+            <!-- Notes will be displayed here -->
+        </div>
     </div>
     <script src="popup.js"></script>
 </body>
+
 </html>

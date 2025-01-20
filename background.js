@@ -76,6 +76,46 @@ async function generateNotes(transcriptText, apiKey, model, tabId) {
   }
 }
 
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message.action === "generateNotes") {
+//     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//       const tabId = tabs[0].id; // Capture the current tab ID
+
+//       chrome.scripting.executeScript({
+//         target: { tabId: tabId },
+//         function: () => {
+//           // Extract transcript from the page
+//           const xpath = '//*[@id="ct-sidebar-scroll-container"]/div';
+//           let element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+//           return element ? element.innerText : 'Transcript not found.';
+//         },
+//       }, async (injectionResults) => {
+//         // Fetch API key and GPT model from storage
+//         chrome.storage.sync.get(['openAIKey', 'gptModel'], async (data) => {
+//           const apiKey = data.openAIKey;
+//           const model = data.gptModel || 'text-davinci-003'; // Default model is text-davinci-003
+
+//           if (!apiKey) {
+//             console.error('API key is not set. Please set the API key in the options page.');
+//             return;
+//           }
+
+//           for (const frameResult of injectionResults) {
+//             try {
+//               const notes = await generateNotes(frameResult.result, apiKey, model, tabId); // Pass tabId to generateNotes
+//               sendResponse({ notes: notes });
+//             } catch (error) {
+//               console.error('Error generating notes:', error);
+//             }
+//           }
+//         });
+//       });
+//     });
+//     return true; // Indicates asynchronous response
+//   }
+// });
+
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "generateNotes") {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -87,13 +127,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Extract transcript from the page
           const xpath = '//*[@id="ct-sidebar-scroll-container"]/div';
           let element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-          return element ? element.innerText : 'Transcript not found.';
+          // Check if the element exists and includes the 'transcript' class
+          if (element && Array.from(element.classList).some(cls => cls.includes('transcript'))) {
+            return element.innerText; // Return transcript text
+          } else {
+            return null; // Return null if transcript not found
+          }
         },
       }, async (injectionResults) => {
         // Fetch API key and GPT model from storage
         chrome.storage.sync.get(['openAIKey', 'gptModel'], async (data) => {
           const apiKey = data.openAIKey;
-          const model = data.gptModel || 'text-davinci-003'; // Default model is text-davinci-003
+          const model = data.gptModel || 'text-davinci-003'; // Default model
 
           if (!apiKey) {
             console.error('API key is not set. Please set the API key in the options page.');
@@ -101,11 +146,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
 
           for (const frameResult of injectionResults) {
-            try {
-              const notes = await generateNotes(frameResult.result, apiKey, model, tabId); // Pass tabId to generateNotes
-              sendResponse({ notes: notes });
-            } catch (error) {
-              console.error('Error generating notes:', error);
+            console.log("frameResult.result",frameResult.result)
+            // Check if we have valid transcript text
+            if (frameResult.result) {
+              try {
+                const notes = await generateNotes(frameResult.result, apiKey, model, tabId); 
+                sendResponse({ notes: notes });
+              } catch (error) {
+                console.error('Error generating notes:', error);
+              }
+            } else {
+              sendResponse({ notes: "Transcript not found." }); // Inform popup that the transcript was not available
             }
           }
         });
@@ -114,4 +165,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // Indicates asynchronous response
   }
 });
-
