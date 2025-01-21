@@ -86,74 +86,6 @@ function clickCourseContent() {
 }
 
 // Function to check readiness (transcript + course content)
-// function checkReadiness(callback) {
-//     let attempts = 0;
-//     const maxAttempts = 10; // Retry for up to 10 seconds
-//     const interval = 1000;
-
-//     const intervalId = setInterval(() => {
-//         const transcriptXPath = "//section[@data-purpose='sidebar']/div[2]";
-//         const transcriptElement = document.evaluate(transcriptXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-
-//         const courseContentXPath = "//section[@aria-label='Tab Navigation']//div[@data-index='1']";
-//         const courseContentElement = document.evaluate(courseContentXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-
-//         const isTranscriptReady = transcriptElement && transcriptElement.textContent.trim().includes('Transcript');
-//         const isCourseContentReady = courseContentElement && courseContentElement.textContent.trim() === 'Course content';
-//         const isReady = isTranscriptReady && isCourseContentReady;
-
-//         if (isReady) {
-//             clearInterval(intervalId);
-//             callback(true);
-//             // chrome.runtime.sendMessage({ action: 'updateReadiness', isReady });
-//         } else if (++attempts >= maxAttempts) {
-//             clearInterval(intervalId);
-//             console.log("Readiness check failed after max attempts");
-//             callback(false);
-//             // chrome.runtime.sendMessage({ action: 'updateReadiness', isReady: false });
-//         }
-//     }, interval);
-// }
-
-// function checkReadiness(callback) {
-//     let attempts = 0;
-//     const maxAttempts = 10; // Retry for up to 10 seconds
-//     const interval = 1000;
-
-//     const intervalId = setInterval(() => {
-//         const transcriptXPath = "//section[@data-purpose='sidebar']/div[2]";
-//         const transcriptElement = document.evaluate(transcriptXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-
-//         const courseContentXPath = "//section[@aria-label='Tab Navigation']//div[@data-index='1']";
-//         const courseContentElement = document.evaluate(courseContentXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-
-//         const isTranscriptReady = transcriptElement && transcriptElement.textContent.trim().includes('Transcript');
-//         const isCourseContentReady = courseContentElement && courseContentElement.textContent.trim() === 'Course content';
-//         const isReady = isTranscriptReady && isCourseContentReady;
-
-//         // Only if ready do we extract titles
-//         if (isReady) {
-//             clearInterval(intervalId);
-
-//             // Fetch the lecture title
-//             const lectureTitle = getLectureTitle();
-//             console.log(`Lecture title: ${lectureTitle}`)
-//             // Fetch the section title
-//             const sectionTitle = getSectionTitle();
-//             console.log(`Section title: ${sectionTitle}`)
-//             // Construct the filename
-//             const fileToSave = `${sanitize(lectureTitle)}.md`; // Assuming sanitize is defined previously
-
-//             callback(true, lectureTitle, sectionTitle, fileToSave);
-//         } else if (++attempts >= maxAttempts) {
-//             clearInterval(intervalId);
-//             console.log("Readiness check failed after max attempts");
-//             callback(false, null, null, null);
-//         }
-//     }, interval);
-// }
-
-// Function to check readiness (transcript + course content)
 function checkReadiness(callback) {
     let attempts = 0;
     const maxAttempts = 10; // Retry for up to 10 seconds
@@ -229,14 +161,6 @@ function getNotes() {
     });
 }
 
-// Function to display notes (sync with popup.js)
-// function displayNotes() {
-//     const currentUrl = window.location.href;
-//     chrome.runtime.sendMessage({
-//         action: 'displayNotes',
-//         url: currentUrl
-//     });
-// }
 
 // Sanitize lecture title
 function sanitize(name) {

@@ -1,27 +1,16 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    resetPopupUI();
+    resetPopup();
     await initializePopup();
     // Event listener for when notes are ready
     window.addEventListener('notesReady', handleNotesReady);
 
 });
 
-const generateNotesTimeout=60000 //60secs
+const generateNotesTimeout = 60000 //60secs
 let currentIndex = 0;
-let lectureTitle='Unable to resolve lecture title'
-let sectionTitle='Unable to resolve section title'
-let notesArray=['No notes generated yet']
-
-function resetPopupUI() {
-    lectureTitle=""
-    document.getElementById('noteIndex').innerText = "0/0";
-    document.getElementById('notes').innerText = "";
-    document.getElementById('lectureName').innerText = lectureTitle;
-    // Reset status indicators
-    document.getElementById('successTick').style.display = 'none';
-    document.getElementById('errorCross').style.display = 'none';
-    refreshGenerateButtonStatus(false);
-}
+let lectureTitle = 'Unable to resolve lecture title'
+let sectionTitle = 'Unable to resolve section title'
+let notesArray = ['No notes generated yet']
 
 let initialized = false;
 
@@ -39,7 +28,7 @@ async function initializePopup() {
         }
 
         const courseUrl = await getCourseUrl(url.href);
-        prefillFolderLocation(courseUrl)  
+        prefillFolderLocation(courseUrl)
 
         await isReadyToGenerateNotes(tabs[0].id);
 
@@ -52,7 +41,7 @@ async function initializePopup() {
                 // loadNotesForUrl(tabs[0].url);
                 displayLectureDetails();
                 displayNotes(notesArray[notesArray.length - 1], notesArray.length - 1, notesArray.length);
-            
+
             }
         });
     });
@@ -77,64 +66,42 @@ function disableAllButtons(message) {
 
 let contentCheckTimeout;
 
-// function checkContentReadiness(tabId) {
-//     if (contentCheckTimeout) {
-//         clearTimeout(contentCheckTimeout);
-//     }
-
-//     contentCheckTimeout = setTimeout(() => {
-//         chrome.tabs.sendMessage(tabId, { action: 'isReadyToGenerateNotes' }, (response) => {
-//             if (response && typeof response.isReady !== 'undefined') {
-//                 console.log(`Lecture Title: ${response.lectureTitle}`);
-//                 console.log(`File to Save: ${response.fileToSave}`);
-//                 console.log(`Folder Location: ${response.folderLocation}`);
-
-//                 updateGenerateButton(response.isReady);
-//             } else {
-//                 updateGenerateButton(false);
-//             }
-//         });
-//     }, 500); // Adjust debounce interval as needed
-// }
 
 async function isReadyToGenerateNotes(tabId) {
-    // if (contentCheckTimeout) {
-    //     clearTimeout(contentCheckTimeout);
-    // }
-
-    // contentCheckTimeout = setTimeout(() => {
-        chrome.tabs.sendMessage(tabId, { action: 'isReadyToGenerateNotes' }, (response) => {
-            if (response && typeof response.isReady !== 'undefined') {
-                refreshGenerateButtonStatus(response.isReady);
-            } else {
-                refreshGenerateButtonStatus(false);
-            }
-        });
+    chrome.tabs.sendMessage(tabId, { action: 'isReadyToGenerateNotes' }, (response) => {
+        if (response && typeof response.isReady !== 'undefined') {
+            console.log('isReadyToGenerateNotes: true')
+            refreshGenerateButtonStatus(response.isReady);
+        } else {
+            console.log('isReadyToGenerateNotes: false')
+            refreshGenerateButtonStatus(false);
+        }
+    });
 
     //     // Fetch lecture details after checking readiness
-        chrome.tabs.sendMessage(tabId, { action: 'getLectureDetails' }, (response) => {
-            if (response) {
-                console.log(`Lecture Title: ${response.lectureTitle}`);
-                console.log(`File to Save: ${response.fileToSave}`);
-                console.log(`Folder Location: ${response.folderLocation}`);
+    chrome.tabs.sendMessage(tabId, { action: 'getLectureDetails' }, (response) => {
+        if (response) {
+            console.log(`Lecture Title: ${response.lectureTitle}`);
+            console.log(`File to Save: ${response.fileToSave}`);
+            console.log(`Folder Location: ${response.folderLocation}`);
 
-                lectureTitle = response.lectureTitle;
-                sectionTitle = response.sectionTitle;
-                notesArray = response.notesArray.length > 0 ? response.notesArray : ['No notes generated yet']
+            lectureTitle = response.lectureTitle;
+            sectionTitle = response.sectionTitle;
+            notesArray = response.notesArray.length > 0 ? response.notesArray : ['No notes generated yet']
 
-                // Display notes if they are available
-                if (notesArray && notesArray.length > 0) {
-                    // notesArray = response.notesArray;
-                    console.log(notesArray);
-                    displayLectureDetails();
-                    displayNotes(notesArray[notesArray.length - 1], notesArray.length - 1, notesArray.length);
-                } else {
-                    console.log('No notes available for display.');
-                }
-
+            // Display notes if they are available
+            if (notesArray && notesArray.length > 0) {
+                // notesArray = response.notesArray;
+                console.log(notesArray);
+                displayLectureDetails();
+                displayNotes(notesArray[notesArray.length - 1], notesArray.length - 1, notesArray.length);
+            } else {
+                console.log('No notes available for display.');
             }
-        });
-    // }, 500); // Adjust debounce interval as needed
+
+        }
+    });
+
 }
 
 async function getLectureDetails(tabId) {
@@ -196,37 +163,47 @@ function toggleButtons(show) {
     buttons.forEach(button => button.disabled = !show);
 }
 
-document.getElementById('generate').addEventListener('click', () => {
-    const event = new CustomEvent('notesReady', { detail: { status: 'ready' } });
+function generateNotesForCurrentLecture(url, timeoutDuration = 60000) {
+    return new Promise((resolve, reject) => {
+        // const currentUrl = getCourseUrlFromTab(); // Or however you retrieve the current URL
+        const timeoutId = setTimeout(() => {
+            toggleLoading(false);
+            toggleButtons(true);
+            console.log('Note generation timed out. Please try again.');
+            reject('Note generation timed out'); // Reject the promise on timeout
+        }, timeoutDuration); // Use the provided timeout duration
+
+        chrome.runtime.sendMessage({ action: "generateNotes", url: url }, (response) => {
+            clearTimeout(timeoutId); // Clear the timeout if notes generation completes
+
+            if (response && response.notes) {
+                console.log("Notes generated successfully.");
+                updateNotesDisplay(response.notes, url);
+                // logMessage("Successfully generated notes.");
+                resolve(); // Resolve the promise when notes are generated
+            } else {
+                console.error('No notes generated or there was an error.');
+                alert('No notes generated or there was an error.'); // Optional error handling
+                reject('No notes generated'); // Reject on error
+            }
+        });
+    });
+}
+
+document.getElementById('generate').addEventListener('click', async () => {
+    const tabUrl = (await chrome.tabs.query({ active: true, currentWindow: true }))[0].url;
 
     toggleLoading(true);
     toggleButtons(false);
 
-    const timeoutId = setTimeout(() => {
-        // toggleLoading(false);
-        // Dispatch a custom event when notes are ready
-        window.dispatchEvent(event);
-        toggleButtons(true);
-        // alert('Note generation timed out. Please try again.');
-        console.log('Note generation timed out. Please try again.');
-    }, generateNotesTimeout);
-
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        chrome.runtime.sendMessage({ action: "generateNotes", url: tabs[0].url }, (response) => {
-            clearTimeout(timeoutId);
-            // toggleLoading(false);
-            // Dispatch a custom event when notes are ready
-            // const event = new CustomEvent('notesReady', { detail: { status: 'ready' } });
-            window.dispatchEvent(event);
-            if (response && response.notes) {
-                updateNotesDisplay(response.notes, tabs[0].url);
-            } else {
-                // alert('No notes generated or there was an error.');
-                console.log('No notes generated or there was an error.');
-            }
-            toggleButtons(true);
-        });
-    });
+    try {
+        await generateNotesForCurrentLecture(tabUrl); // Call the refactored function with the default timeout
+    } catch (error) {
+        console.error(error); // Handle any error or timeout here
+    } finally {
+        toggleLoading(false);
+        toggleButtons(true); // Re-enable buttons after operation complete
+    }
 });
 
 document.getElementById('copy').addEventListener('click', () => {
@@ -249,11 +226,15 @@ function handleNavigation(direction) {
 }
 
 function resetPopup() {
-    lectureTitle=''
-    sectionTitle=''
+    lectureTitle = ''
+    sectionTitle = ''
     document.getElementById('noteIndex').innerText = "0/0";
     document.getElementById('notes').innerText = "";
     document.getElementById('lectureName').innerText = lectureTitle;
+
+    document.getElementById('successTick').style.display = 'none';
+    document.getElementById('errorCross').style.display = 'none';
+
     refreshGenerateButtonStatus(false);
 }
 
@@ -303,7 +284,7 @@ function updateNotesDisplay(notes, url) {
     });
 }
 
-function displayLectureDetails(){
+function displayLectureDetails() {
     document.getElementById('lectureName').innerText = `${sectionTitle} - ${lectureTitle}`;
 }
 
@@ -317,10 +298,7 @@ function displayNotes(notes, index, total) {
 
     // document.getElementById('lectureName').innerText = extractTitleFromNotes(notes);
 }
-function extractTitleFromNotes(notes) {
-    const firstLine = notes.split('\n')[0];
-    return firstLine.startsWith('##') ? firstLine.replace('##', '').trim() : "[Lecture Title]";
-}
+
 
 function navigateNotes(direction) {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -348,38 +326,49 @@ function refreshGenerateButtonStatus(isReady) {
     }
 }
 
+// Function to save current notes to markdown
+function saveCurrentNotes() {
+    return new Promise(async (resolve, reject) => {
+        const markdownContent = document.getElementById('notes').innerText.trim();
 
+        document.getElementById('successTick').style.display = 'none';
+        document.getElementById('errorCross').style.display = 'none';
 
-document.getElementById('saveToMd').addEventListener('click', async () => {
-    const markdownContent = document.getElementById('notes').innerText.trim();
-
-    // Reset status indicators
-    document.getElementById('successTick').style.display = 'none';
-    document.getElementById('errorCross').style.display = 'none';
-
-    if (!markdownContent) {
-        document.getElementById('errorCross').innerText = "No markdown content available to save.";
-        document.getElementById('errorCross').style.display = 'inline-block'; // Show error indicator
-        return;
-    }
-
-    const courseUrl = await getCourseUrlFromTab();
-    getFolderLocation(courseUrl, async (folderLocation) => {
-        if (!folderLocation) {
-            document.getElementById('errorCross').innerText = "User did not provide a folder location.";
+        if (!markdownContent) {
+            document.getElementById('errorCross').innerText = "No markdown content available to save.";
             document.getElementById('errorCross').style.display = 'inline-block'; // Show error indicator
-            return; // User did not provide a folder location
+            reject('No markdown content available'); // Reject if no content
+            return;
         }
 
-        try {
-            // const courseStructure = await loadCourseStructure(courseUrl, folderLocation); // Load the course structure
-            await saveLectureMarkdown(folderLocation, markdownContent);
-            document.getElementById('successTick').style.display = 'inline'; // Show success indicator
-        } catch (error) {
-            document.getElementById('errorCross').innerText = "Error saving lecture markdown.";
-            document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
-        }
+        const courseUrl = await getCourseUrlFromTab();
+        getFolderLocation(courseUrl, async (folderLocation) => {
+            if (!folderLocation) {
+                document.getElementById('errorCross').innerText = "User did not provide a folder location.";
+                document.getElementById('errorCross').style.display = 'inline-block'; // Show error indicator
+                return; // User did not provide a folder location
+            }
+
+            try {
+                // const courseStructure = await loadCourseStructure(courseUrl, folderLocation); // Load the course structure
+                await saveLectureMarkdown(folderLocation, markdownContent);
+                document.getElementById('successTick').style.display = 'inline'; // Show success indicator
+            } catch (error) {
+                document.getElementById('errorCross').innerText = "Error saving lecture markdown.";
+                document.getElementById('errorCross').style.display = 'inline'; // Show error indicator
+            }
+        });
+        resolve(); // Resolve the promise when save is successful
     });
+}
+
+// Refactored save to .md listener
+document.getElementById('saveToMd').addEventListener('click', async () => {
+    try {
+        await saveCurrentNotes();
+    } catch (error) {
+        console.error(error);
+    }
 });
 
 function sanitize(name) {
@@ -550,7 +539,6 @@ document.getElementById('clearCourseData').addEventListener('click', async () =>
     }
 });
 
-
 async function generateAndSaveNotesAutomatically() {
     const autoGenerateCheckbox = document.getElementById('autoGenerate');
     if (!autoGenerateCheckbox.checked) return;
@@ -558,63 +546,46 @@ async function generateAndSaveNotesAutomatically() {
     const waitBetweenLectures = 6000; // 6 seconds, configurable
     const waitAfterSave = 3000;      // 3 seconds, configurable
 
-    async function processLecture() {
+    function processLecture() {
         navigateToItem('next'); // Start by navigating to the next lecture
+        resetPopup();
         logMessage("Clicked on Next");
-        resetPopupUI();
+
         // Wait for the lecture to load
-        await delay(waitBetweenLectures);
-        
-        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+        return delay(waitBetweenLectures).then(() => {
+            return chrome.tabs.query({ active: true, currentWindow: true });
+        }).then((tabs) => {
+            console.log('Tabs', tabs)
             if (tabs.length > 0) {
-                await isReadyToGenerateNotes(tabs[0].id);
-                const currentUrl = tabs[0].url;
+                const tabId = tabs[0].id;
+                const tabUrl = tabs[0].url;
 
-                if (isGenerateButtonEnabled()) {
+                return isReadyToGenerateNotes(tabId).then(() => {
+                    // if (isGenerateButtonEnabled()) {
+                    console.log(`Generate button is enabled`)
                     logMessage(`Trying to generate notes for lecture ${lectureTitle}`);
-                    document.getElementById('generate').click();
-
-                    // Listen for notesReady event
-                    const notesReadyHandler = (event) => {
-                        const { status } = event.detail;
-                        if (status === 'ready') {
-                            // const lectureTitle = document.getElementById('lectureName').innerText;
-                            processNotes(currentUrl, lectureTitle);
-                            window.removeEventListener('notesReady', notesReadyHandler); // Clean up listener
-                        }
-                    };
-
-                    window.addEventListener('notesReady', notesReadyHandler);
-                } else {
-                    logMessage("Generate button not enabled, skipping to next lecture");
-                    navigateToNextIfNeeded();
-                }
+                    toggleLoading(true);
+                    toggleButtons(false);
+                    return generateNotesForCurrentLecture(tabUrl).then(async () => {
+                        toggleLoading(false);
+                        toggleButtons(true);
+                        await delay(3000);
+                        return saveCurrentNotes().then(() => {
+                            logMessage(`Lecture notes saved successfully for ${lectureTitle}.`);
+                            return delay(waitAfterSave); // Wait after saving
+                        });
+                    });
+                    // } else {
+                    //     logMessage("Generate button not enabled, skipping to next lecture");
+                    // }
+                });
             }
+        }).then(() => {
+            navigateToNextIfNeeded();
         });
     }
 
-    async function processNotes(currentUrl, lectureTitle) {
-        // loadNotesForUrl(currentUrl); // Load notes after generation
-        // displayNotes(notesArray[notesArray.length - 1], notesArray.length - 1, notesArray.length);
-        logMessage("Successfully generated notes, clicking on save");
-        await saveNotes();
-        logMessage(`Saved notes to ${await getCourseLogDirectory()}`);
-        await delay(waitAfterSave);
-        navigateToNextIfNeeded();
-        // chrome.storage.local.get([currentUrl], async (result) => {
-        //     const notesArray = result[currentUrl] || [];
-        //     if (notesArray.length > 0) {
-        //         logMessage("Successfully generated notes, clicking on save");
-        //         await saveNotes();
-        //         logMessage(`Saved notes to ${await getCourseLogDirectory()}`);
-        //         await delay(waitAfterSave);
-        //         navigateToNextIfNeeded();
-        //     } else {
-        //         logMessage(`Failed to generate notes for ${lectureTitle}, skipping to next`);
-        //         navigateToNextIfNeeded();
-        //     }
-        // });
-    }
+    processLecture();
 
     function navigateToNextIfNeeded() {
         if (autoGenerateCheckbox.checked) {
@@ -622,19 +593,9 @@ async function generateAndSaveNotesAutomatically() {
         }
     }
 
-    function isGenerateButtonEnabled() {
-        const generateButton = document.getElementById('generate');
-        return generateButton && !generateButton.disabled;
-    }
-
-    async function delay(ms) {
+    function delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
-
-    async function saveNotes() {
-        document.getElementById('saveToMd').click();
-    }
-
     async function logMessage(message) {
         const logDirectory = await getCourseLogDirectory();
         const logFilePath = logDirectory + `/_${getCurrentDate()}.md`;
@@ -670,7 +631,6 @@ async function generateAndSaveNotesAutomatically() {
         });
     }
 
-    processLecture();
 }
 
 document.getElementById('autoGenerate').addEventListener('change', (event) => {
