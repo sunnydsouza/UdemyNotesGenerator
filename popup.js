@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-const generateNotesTimeout = 60000 //60secs
+const generateNotesTimeout = 180000 //120secs
 let currentIndex = 0;
 let lectureTitle = 'Unable to resolve lecture title'
 let sectionTitle = 'Unable to resolve section title'
@@ -319,6 +319,7 @@ function navigateNotes(direction) {
 }
 
 function refreshGenerateButtonStatus(isReady) {
+    console.log(`Value of isReady: ${isReady}`)
     const generateButton = document.getElementById('generate');
     if (generateButton) {
         generateButton.disabled = !isReady;
@@ -398,6 +399,15 @@ function getFolderLocation(courseUrl, callback) {
     });
 }
 
+function saveFolderLocation(courseUrl, folderLocation) {
+    const data = { [courseUrl]: folderLocation };
+    chrome.storage.sync.set(data, () => {
+        console.log(`Folder location saved for course: ${courseUrl}`);
+        alert("Folder location saved successfully!");
+    });
+}
+
+
 async function createFile(path, content) {
     await fetch('http://localhost:3000/api/create-file', {
         method: 'POST',
@@ -436,12 +446,14 @@ async function saveLectureMarkdown(baseFolder, markdownContent) {
     const lecturePath = `${sectionPath}/${sanitizedLectureTitle}`;
 
     // Check if the file exists
-    const fileExists = await checkFileExists(lecturePath);
-    if (fileExists) {
-        const overwrite = confirm(`File "${sanitizedLectureTitle}" already exists. Overwrite?`);
-        if (!overwrite) {
-            console.log("User chose not to overwrite the file.");
-            return; // Exit if the user chooses not to overwrite
+    if (!document.getElementById('autoGenerate').checked) {
+        const fileExists = await checkFileExists(lecturePath);
+        if (fileExists) {
+            const overwrite = confirm(`File "${sanitizedLectureTitle}" already exists. Overwrite?`);
+            if (!overwrite) {
+                console.log("User chose not to overwrite the file.");
+                return; // Exit if the user chooses not to overwrite
+            }
         }
     }
 
