@@ -92,7 +92,7 @@ function checkReadiness(callback) {
     const interval = 1000;
 
     const intervalId = setInterval(() => {
-        const transcriptXPath = "//section[@data-purpose='sidebar']/div[2]";
+        const transcriptXPath = "//section[@data-purpose='sidebar']/div[1]";
         const transcriptElement = document.evaluate(transcriptXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
         const courseContentXPath = "//section[@aria-label='Tab Navigation']//div[@data-index='1']";
