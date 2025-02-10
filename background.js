@@ -48,28 +48,65 @@ async function generateNotes(transcriptText, apiKey, model, tabId) {
     //   role: "user",
     //   content: `Generate Markdown Notes\nDescription: Convert the following transcript into detailed notes with code examples in markdown format.\n---\n${transcriptText}\n---\nConsidering the student is a novice.\n Wherever possible use a analogy to explain the concept. Also, generate mermaidjs mardown based diagrams wherever possible.`
     // }
+    // {
+    //   role: "user",
+    //   content: `Generate Markdown Notes with Detailed Index and Diagrams  
+    //             Description: Convert the following transcript into comprehensive, beginner-friendly markdown notes. The notes should include:  
+    //             1. A **clickable index** of topics covered, formatted for easy navigation in platforms like GitHub or Obsidian. The last entry in the index should always be a "Cheat Note Summary" of the lecture.  
+    //             2. **In-depth explanations** of each topic from the transcript. Use clear and concise language, suitable for a novice audience.  
+    //             3. **Analogies** wherever possible to simplify and clarify concepts.  
+    //             4. **Code examples** relevant to the discussed concepts to enhance understanding.  
+    //             5. **Mermaid.js diagrams** (e.g., flowcharts, sequence diagrams, or other appropriate visualizations) for complex topics, embedded in markdown format for better comprehension.  
+
+    //             At the end of the notes, include a **Cheat Note Summary**, condensing the lecture into key takeaways, formulas, and examples for quick revision. Ensure the summary is also listed as a topic in the index.
+
+    //             ---  
+    //             Input Transcript:  
+    //             ${transcriptText}  
+    //             ---  
+
+    //             Output Format:  
+    //             - A well-structured Markdown document with sections aligned with the index.  
+    //             - Clickable links in the index for each section, including the Cheat Note Summary.  
+    //             - Clear topic explanations with examples, diagrams, and analogies.  
+    //             - Mermaid.js diagrams embedded in Markdown syntax where applicable.  
+    //             `
+    // }
+
     {
       role: "user",
-      content: `Generate Markdown Notes with Detailed Index and Diagrams  
-                Description: Convert the following transcript into comprehensive, beginner-friendly markdown notes. The notes should include:  
-                1. A **clickable index** of topics covered, formatted for easy navigation in platforms like GitHub or Obsidian. The last entry in the index should always be a "Cheat Note Summary" of the lecture.  
-                2. **In-depth explanations** of each topic from the transcript. Use clear and concise language, suitable for a novice audience.  
-                3. **Analogies** wherever possible to simplify and clarify concepts.  
-                4. **Code examples** relevant to the discussed concepts to enhance understanding.  
-                5. **Mermaid.js diagrams** (e.g., flowcharts, sequence diagrams, or other appropriate visualizations) for complex topics, embedded in markdown format for better comprehension.  
+      content: `Generate Comprehensive Markdown Notes with Diagrams and Callout Blocks  
+                Description: Transform the provided transcript into detailed, beginner-friendly markdown notes. Ensure the following key features are included:
 
-                At the end of the notes, include a **Cheat Note Summary**, condensing the lecture into key takeaways, formulas, and examples for quick revision. Ensure the summary is also listed as a topic in the index.
+                1. **Detailed Explanations**: Expand on each topic with in-depth explanations tailored for novices, using relatable analogies wherever possible.  
+                2. **Mermaid Diagrams**: Include relevant mermaid.js diagrams (flowcharts, sequence diagrams, etc.) to visually represent concepts and workflows.  
+                3. **Code Examples**: Provide illustrative code examples wherever applicable to solidify understanding.  
+                4. **Callout Blocks**: Summarize key sections and include tips using pre-defined callout formats:  
 
+                ---
+                > [!SUMMARY] Cheat sheet 
+                > Summarize the topic in a way useful for interview presparation  
                 ---  
+                > [!INFO]  
+                > Here's a callout block.  
+                > It supports **markdown** and [[Internal link|wikilinks]].  
+
+                > [!TIP] Callouts can have custom titles, which also supports **markdown**!  
+                ---  
+
+                
                 Input Transcript:  
-                ${transcriptText}  
                 ---  
+                ${transcriptText}  
+                ---
 
-                Output Format:  
-                - A well-structured Markdown document with sections aligned with the index.  
-                - Clickable links in the index for each section, including the Cheat Note Summary.  
-                - Clear topic explanations with examples, diagrams, and analogies.  
-                - Mermaid.js diagrams embedded in Markdown syntax where applicable.  
+                Instructions: 
+                - Always precede/start with a Cheat Code section, which is a compressed summary, useful for interview prep on the topic 
+                - Organize content into well-structured sections and subsections.  
+                - Use clear and concise language suitable for beginners.  
+                - Embed callout blocks wherever applicable.  
+                - Ensure diagrams and code examples are well-formatted for Markdown rendering without additional block wrapping.
+                - DO NOT WRAP blocks with  markdown code format
                 `
     }
   ];
