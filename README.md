@@ -73,8 +73,8 @@ The extension now supports saving notes directly to structured folders:
 
 ## Popup Page (`popup.html`)
 
-![The extension popup](<docs/Image 2024-10-25 06-49-22.png>)
-![Ability to naigate between regenerations](<docs/Image 2024-10-25 06-50-02.png>)
+![The extension popup](<docs/Image 2025-02-13 22-33-22.png>)
+
 
 The **popup.html** file is the main user interface of the extension. This popup appears when the user clicks the extension icon in the Chrome toolbar and offers two primary buttons for note generation and markdown generation. Additionally, there are controls for copying the generated markdown and navigating through the history of notes.
 
@@ -113,7 +113,7 @@ The **popup.html** file is the main user interface of the extension. This popup 
 
 The **options.html** page is designed to allow users to configure future settings for the extension. Although the current core functionality does not rely on external APIs, the options page is ready for future features.
 
-![Options](<docs/Image 2024-10-25 06-51-38.png>)
+![Options](<docs/Image 2025-02-13 22-40-57.png>)
 
 ### Key Elements:
 
@@ -121,7 +121,7 @@ The **options.html** page is designed to allow users to configure future setting
    - Here, users can enter their OpenAI API key, which will be used for future advanced features that require AI-generated summaries or notes.
 
 2. **GPT Model Selector**:
-   - Users can select the GPT model (e.g., `gpt-4o`, `gpt-4o-mini`) for any future OpenAI-based features.
+   - Users can select the GPT model (e.g.,`o3-mini`, `gpt-4o`, `gpt-4o-mini`) for any future OpenAI-based features.
 
 3. **Save Button**:
    - The "Save" button stores the entered API key and selected GPT model in Chrome's storage for later use.
