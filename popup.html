@@ -1,34 +1,69 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="styles/popup.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <title>Notes Summary</title>
 </head>
-
 <body>
     <div id="content">
-        <div>
+        <!-- Base Folder Location with icons for Show/Clear Course Data -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px;">
             <label for="folderLocation">Base Folder Location:</label>
             <input type="text" id="folderLocation" placeholder="/path/to/course/folder">
+            <span id="showCourseData" class="material-icons nav-link" title="Show Course Data">visibility</span>
+            <span id="clearCourseData" class="material-icons nav-link" title="Clear Course Data">delete</span>
         </div>
-        <div id="actionArea">
-            <button id="generateMarkdown">Generate Course Markdown</button>
-            <button id="generate">Re/Generate Notes</button>
 
-            <div id="loading" style="display:none;"></div>
+        <!-- Action Buttons -->
+        <div id="actionArea" style="margin-bottom: 3px;">
+            <button id="prevItem" title="Previous Lecture">
+                <span class="material-icons">navigate_before</span>
+            </button>
+            <button id="generate" title="Transcript and course content must be visible to generate notes" disabled>
+                <span class="material-icons">auto_fix_high</span>
+                Generate Notes
+            </button>
+            <button id="nextItem" title="Next Lecture">
+                <span class="material-icons">navigate_next</span>
+            </button>
         </div>
-        <div id="notes" placeholder="Notes will be generated here..."></div>
-        <div id="navigation" style="display:none;">
-            <button id="prevNote"><span class="material-icons">navigate_before</span></button>
-            <span id="noteIndex">0/0</span>
-            <button id="nextNote"><span class="material-icons">navigate_next</span></button>
+
+        <!-- Toggle for Automate Notes -->
+        <div style="display: flex; align-items: center; margin-bottom: 3px;">
+            <label for="autoGenerate">Automate Notes Till End (Beta):</label>
+            <label class="switch">
+                <input type="checkbox" id="autoGenerate">
+                <span class="slider"></span>
+            </label>
         </div>
-        <button id="copy" style="display:none;"><span class="material-icons">content_copy</span></button>
-        <button id="saveToMd" style="display:none;">Save/Update .md file</button>
+
+        <!-- Note Navigation and Status -->
+        <div id="controlLinks" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+            <div id="noteNavigation">
+                <span id="prevNote" class="nav-link" title="Previous Note">&lt;</span>
+                <span id="noteIndex">0/0</span>
+                <span id="nextNote" class="nav-link" title="Next Note">&gt;</span>
+            </div>
+            <div>
+                <span id="loading" style="display:none;" class="loading-icon"></span>
+                <span id="copy" class="material-icons nav-link" title="Copy Notes">content_copy</span>
+                <span id="saveToMd" class="material-icons nav-link" title="Save Notes">save</span>
+                <span id="successTick" style="color:green; display:none;vertical-align: super;">✅</span>
+                <span id="errorCross" style="color:red; display:none;vertical-align: super;">❌</span>
+            
+            </div>
+        </div>
+
+        <!-- Lecture Title -->
+        <div id="lectureTitle">
+            <span id="lectureName"></span>
+        </div>
+
+        <!-- Notes Display -->
+        <div id="notes" class="notes-container" placeholder="Notes will be generated here..."></div>
     </div>
     <script src="popup.js"></script>
 </body>
-
 </html>

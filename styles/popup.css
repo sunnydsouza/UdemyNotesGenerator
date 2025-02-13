@@ -1,42 +1,107 @@
-/* styles/popup.css */
 body {
-    width: 300px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    width: 360px;
     padding: 10px;
+    box-sizing: border-box;
 }
-
-/* #notes {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-top: 10px;
-    min-height: 100px; 
-    white-space: pre-wrap;
-} */
-
-/* button {
-    margin-top: 10px;
-    cursor: pointer;
-} */
 
 #content {
     display: flex;
     flex-direction: column;
+    /* gap: 10px; */
 }
 
-/* --- */
 #actionArea {
     display: flex;
-    align-items: center; /* Aligns items vertically center */
+    align-items: center;
+    justify-content: space-around;
+    margin-bottom: 10px;
+    padding: 0;
+    gap: 5px;
 }
 
-#loading {
-    border: 4px solid #f3f3f3; /* Light grey background */
-    border-top: 4px solid #3498db; /* Blue */
+/* #loading {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
     border-radius: 50%;
     margin: 6px;
     padding: 6px;
     width: 15px;
     height: 15px;
     animation: spin 2s linear infinite;
+} */
+/* .notes-container {
+    position: relative; 
+    border: 1px solid #ccc;
+    padding: 10px;
+    min-height: 150px; 
+    white-space: pre-wrap;
+    background-color: #fff;
+    color: #333;
+    overflow-y: auto;
+    box-sizing: border-box;
+    margin-top: 10px;
+} */
+
+/* Notes Section */
+.notes-container {
+    border: 1px solid #ccc;
+    padding: 10px;
+    min-height: 150px;
+    background-color: #fff;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+#loading {
+    display: inline-block; /* Make it inline */
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 15px; 
+    height: 15px; 
+    animation: spin 2s linear infinite;
+}
+
+#controlLinks {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Space between left and right elements */
+    margin-bottom: 10px;
+}
+
+.nav-link {
+    cursor: pointer;
+    color: #333; /* No blue color */
+    font-size: 14px;
+    text-decoration: none; /* No underline */
+    /* margin-left: 10px; */
+}
+
+.material-icons {
+    font-size: 22px; /* Slightly reduce icon size */
+}
+
+#noteIndex {
+    margin: 0 5px;
+    font-size: 14px;
+    color: #444;
+    align-content: center;
+}
+
+#notes {
+    position: relative; /* Set position to contain the loading icon */
+    border: 1px solid #ccc;
+    padding: 10px;
+    min-height: 150px; /* Increased height */
+    white-space: pre-wrap;
+    background-color: #fff;
+    color: #333;
+    overflow-y: auto;
+    box-sizing: border-box;
+    margin-top: 10px;
 }
 
 @keyframes spin {
@@ -44,20 +109,140 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-#notes {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-top: 10px;
-    min-height: 100px;
-    white-space: pre-wrap;
-}
-
 button {
-    margin: 5px 0; /* Adjusts spacing around buttons */
+    padding: 5px;
+    font-size: 12px;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
+    color: #333;
+    background-color: #e0e0e0; /* Visible color for buttons */
+    transition: background-color 0.3s ease;
+    flex: 1;
+    text-align: center;
+    margin: 5px; /* Add margin for spacing */
 }
 
-.material-icons {
-    vertical-align: middle; /* Aligns icon vertically with text */
+button:hover {
+    background-color: #ccc;
 }
 
+button span.material-icons {
+    vertical-align: middle;
+}
+
+#generate {
+    background-color: #ffa500; /* Distinct color for Generate button */
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+}
+
+#generate:hover {
+    background-color: #ff7f00;
+}
+
+#saveStatus {
+    display: flex;
+    align-items: center;
+    margin-left: 10px; /* Space between button and status */
+}
+
+#successTick, #errorCross {
+    font-size: 16px; /* Font size for indicators */
+    margin-right: 5px; /* Space between indicators */
+}
+
+
+/* Folder Location with Icons */
+input#folderLocation {
+    flex: 1;
+    margin-right: 10px;
+}
+
+span.nav-link {
+    cursor: pointer;
+    padding: 0 3px;
+    margin: 0 3px;
+    border-radius: 4px;
+    background-color: #e0e0e0;
+    transition: background-color 0.2s;
+}
+
+span.nav-link:hover {
+    background-color: #ccc;
+}
+
+/* Generate Notes Button (Disabled) */
+button#generate[disabled] {
+    background-color: #d3d3d3;
+    color: #888;
+    cursor: not-allowed;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+    transform: translateX(14px);
+}
+
+#lectureTitle {
+    font-weight: bold;
+    font-size: 12px; /* Smaller font size, aligned with others */
+    margin-bottom: 3px;
+    text-align: left;
+}
+
+/* #loading {
+    display: inline-block;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 15px; 
+    height: 15px; 
+    animation: spin 2s linear infinite;
+    margin-right: 5px;
+    vertical-align: middle;
+} */
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

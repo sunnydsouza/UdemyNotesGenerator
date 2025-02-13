@@ -21,11 +21,36 @@
                     <option value="gpt-4o-mini">gpt-4o-mini</option>
                 </select>
             </div>
-            
+
             <div class="form-group">
                 <label for="openAIKey">OpenAI API Key:</label>
                 <input type="text" id="openAIKey" name="openAIKey" required>
             </div>
+
+            <div class="form-group">
+                <label for="autoGenerate">Auto generate for entire course:</label>
+                <label class="switch">
+                    <input type="checkbox" id="autoGenerate">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="showTranscript">Always show transcript:</label>
+                <label class="switch">
+                    <input type="checkbox" id="showTranscript">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="showCourseContent">Always show course content:</label>
+                <label class="switch">
+                    <input type="checkbox" id="showCourseContent">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
             <button type="submit">Save</button>
         </form>
     </main>

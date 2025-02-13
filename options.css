@@ -1,5 +1,7 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9f9fb;
+    color: #333;
     margin: 0;
     padding: 0;
     display: flex;
@@ -8,43 +10,67 @@ body {
 }
 
 header {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
     border-bottom: 1px solid #e0e0e0;
-    padding: 10px;
+    padding: 10px 0;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 header h1 {
-    margin: 0 0 0 10px;
-    font-size: 24px;
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #007bff;
 }
 
 main {
     flex-grow: 1;
-    padding: 20px;
+    padding: 40px;
+    background-color: #ffffff;
+    max-width: 800px;
+    width: 90%;
+    margin: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
-form {
-    max-width: 500px;
-    /* margin: auto; */
+label {
+    font-size: 16px;
+    font-weight: 500;
+    flex: 2;
+    text-align: left;
+    margin-right: 10px;
+}
+
+input[type="text"], select {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    flex: 3;
 }
 
 footer {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
     border-top: 1px solid #e0e0e0;
     text-align: center;
-    padding: 10px;
+    padding: 15px;
     font-size: 14px;
 }
 
 #extensionIcon {
     width: 48px;
     height: 48px;
+    margin-right: 10px;
 }
 
 button {
@@ -52,11 +78,62 @@ button {
     background-color: #007bff;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 30px;
     font-size: 16px;
     border-radius: 5px;
+    display: block;
+    margin: 20px auto;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
     background-color: #0056b3;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    max-width: 60px;
+    height: 34px;
+    margin-left: 10px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
 }
