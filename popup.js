@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-const generateNotesTimeout = 180000 //120secs
+const generateNotesTimeout = 180000 //180secs
 let currentIndex = 0;
 let lectureTitle = 'Unable to resolve lecture title'
 let sectionTitle = 'Unable to resolve section title'
@@ -163,7 +163,7 @@ function toggleButtons(show) {
     buttons.forEach(button => button.disabled = !show);
 }
 
-function generateNotesForCurrentLecture(url, timeoutDuration = 60000) {
+function generateNotesForCurrentLecture(url, gptModel, timeoutDuration = 180000) {
     return new Promise((resolve, reject) => {
         // const currentUrl = getCourseUrlFromTab(); // Or however you retrieve the current URL
         const timeoutId = setTimeout(() => {
@@ -173,11 +173,12 @@ function generateNotesForCurrentLecture(url, timeoutDuration = 60000) {
             reject('Note generation timed out'); // Reject the promise on timeout
         }, timeoutDuration); // Use the provided timeout duration
 
-        chrome.runtime.sendMessage({ action: "generateNotes", url: url }, (response) => {
+        chrome.runtime.sendMessage({ action: "generateNotes", url: url, gptModel: gptModel }, (response) => {
             clearTimeout(timeoutId); // Clear the timeout if notes generation completes
-
+            console.log(`Generating notes for url ${url} using model: ${gptModel}`);
             if (response && response.notes) {
                 console.log("Notes generated successfully.");
+                // saveTranscript(response.transcript, url);
                 updateNotesDisplay(response.notes, url);
                 // logMessage("Successfully generated notes.");
                 resolve(); // Resolve the promise when notes are generated
@@ -197,7 +198,12 @@ document.getElementById('generate').addEventListener('click', async () => {
     toggleButtons(false);
 
     try {
-        await generateNotesForCurrentLecture(tabUrl); // Call the refactored function with the default timeout
+        // Retrieve the selected GPT model from the dropdown
+        const gptModel = document.getElementById('gptModelDropdown').value; // Change ID as necessary
+
+        // Send message to background.js including the gptModel
+        await generateNotesForCurrentLecture(tabUrl, gptModel); // Pass gptModel
+
     } catch (error) {
         console.error(error); // Handle any error or timeout here
     } finally {
@@ -206,12 +212,37 @@ document.getElementById('generate').addEventListener('click', async () => {
     }
 });
 
-document.getElementById('copy').addEventListener('click', () => {
-    const notes = document.getElementById('notes').innerText;
-    navigator.clipboard.writeText(notes).then(() => {
-        alert('Notes copied to clipboard!');
+document.getElementById('copy').addEventListener('click', async () => {
+    const notesElement = document.getElementById('notes');
+    const url = await getLectureUrlFromTab(); // Assuming you can get the URL like this, adjust if needed
+
+    console.log("Copying notes for URL:", url);
+    // Fetch transcript directly within the copy operation
+    const transcript = await getTranscript(url);
+    console.log("Transcript fetched:", transcript);
+
+    // Conditionally append transcript
+    const transcriptMetadata = transcript ? `\n\n<!--\nThis transcript is associated with the following URL: ${url}\n---Transcript---\n${transcript}\n---End of Transcript---\n-->` : '';
+
+    const fullNotes = notesElement.innerText + transcriptMetadata;
+
+    navigator.clipboard.writeText(fullNotes).then(() => {
+        alert('Notes copied to clipboard, including transcript!');
+    }).catch((error) => {
+        console.error('Error copying notes:', error);
+        alert('Failed to copy notes to clipboard.');
     });
 });
+
+// Updated getTranscript function to return a promise
+function getTranscript(url) {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['transcripts'], (data) => {
+            const transcripts = data.transcripts || {};
+            resolve(transcripts[url] || null);
+        });
+    });
+}
 
 document.getElementById('prevNote').addEventListener('click', () => navigateNotes(-1));
 document.getElementById('nextNote').addEventListener('click', () => navigateNotes(1));
@@ -237,6 +268,8 @@ function resetPopup() {
 
     refreshGenerateButtonStatus(false);
 }
+
+
 
 function checkReadinessAfterReset() {
     setTimeout(() => {
@@ -273,6 +306,21 @@ function navigateToItem(direction) {
         });
     });
 }
+
+function saveTranscript(transcript, url) {
+    console.log('Transcript:', transcript);
+    console.log('url:', url);
+
+    chrome.storage.local.get(['transcripts'], (data) => {
+        const transcripts = data.transcripts || {};
+        transcripts[url] = transcript;
+
+        chrome.storage.local.set({ transcripts }, () => {
+            console.log(`Transcript saved for ${url}`);
+        });
+    });
+}
+
 
 function updateNotesDisplay(notes, url) {
     chrome.storage.local.get([url], (result) => {
@@ -327,10 +375,22 @@ function refreshGenerateButtonStatus(isReady) {
     }
 }
 
+
+
 // Function to save current notes to markdown
 function saveCurrentNotes() {
     return new Promise(async (resolve, reject) => {
         const markdownContent = document.getElementById('notes').innerText.trim();
+        // Make sure to define or pass the appropriate URL here if it is being used
+        const courseUrl = await getCourseUrlFromTab();
+        const lectureUrl = await getLectureUrlFromTab();
+
+        // Fetch the transcript asynchronously
+        const transcript = await getTranscript(lectureUrl);
+
+        const transcriptMetadata = transcript ? `\n\n<!--\nThis transcript is associated with the following URL: ${lectureUrl}\n---Transcript---\n${transcript}\n---End of Transcript---\n-->` : '';
+        const contentToSave = markdownContent + transcriptMetadata;
+
 
         document.getElementById('successTick').style.display = 'none';
         document.getElementById('errorCross').style.display = 'none';
@@ -342,7 +402,7 @@ function saveCurrentNotes() {
             return;
         }
 
-        const courseUrl = await getCourseUrlFromTab();
+        
         getFolderLocation(courseUrl, async (folderLocation) => {
             if (!folderLocation) {
                 document.getElementById('errorCross').innerText = "User did not provide a folder location.";
@@ -352,7 +412,7 @@ function saveCurrentNotes() {
 
             try {
                 // const courseStructure = await loadCourseStructure(courseUrl, folderLocation); // Load the course structure
-                await saveLectureMarkdown(folderLocation, markdownContent);
+                await saveLectureMarkdown(folderLocation, contentToSave);
                 document.getElementById('successTick').style.display = 'inline'; // Show success indicator
             } catch (error) {
                 document.getElementById('errorCross').innerText = "Error saving lecture markdown.";
@@ -578,7 +638,10 @@ async function generateAndSaveNotesAutomatically() {
                     logMessage(`Trying to generate notes for lecture ${lectureTitle}`);
                     toggleLoading(true);
                     toggleButtons(false);
-                    return generateNotesForCurrentLecture(tabUrl).then(async () => {
+                    // Retrieve the selected GPT model from the dropdown
+                    const gptModel = document.getElementById('gptModelDropdown').value; // Change ID as necessary
+
+                    return generateNotesForCurrentLecture(tabUrl, gptModel).then(async () => {
                         toggleLoading(false);
                         toggleButtons(true);
                         await delay(3000);
@@ -650,6 +713,19 @@ document.getElementById('autoGenerate').addEventListener('change', (event) => {
         generateAndSaveNotesAutomatically();
     }
 });
+
+async function getLectureUrlFromTab() {
+    return new Promise((resolve, reject) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs || tabs.length === 0) {
+                reject("No active tab found.");
+            } else {
+                const url = new URL(tabs[0].url);
+                resolve(url.href);
+            }
+        });
+    });
+}
 
 async function getCourseUrlFromTab() {
     return new Promise((resolve, reject) => {
