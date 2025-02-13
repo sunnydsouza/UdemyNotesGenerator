@@ -138,52 +138,213 @@ async function generateNotes(transcriptText, apiKey, model, tabId) {
 }
 
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "generateNotes") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0].id; // Capture the current tab ID
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message.action === "generateNotes") {
+//     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//       const tabId = tabs[0].id; // Capture the current tab ID
 
-      chrome.scripting.executeScript({
+//       chrome.scripting.executeScript({
+//         target: { tabId: tabId },
+//         function: () => {
+//           // Extract transcript from the page
+//           const xpath = '//*[@id="ct-sidebar-scroll-container"]/div';
+//           let element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+//           // Check if the element exists and includes the 'transcript' class
+//           if (element && Array.from(element.classList).some(cls => cls.includes('transcript'))) {
+//             // Get the inner text and compress multiple newlines
+//             let transcript = element.innerText;
+
+//             // Replace multiple newlines with a single newline
+//             transcript = transcript.replace(/\n\s*\n/g, '\n').trim();
+
+//             return transcript; // Return cleaned-up transcript text
+
+//           } else {
+//             return null; // Return null if transcript not found
+//           }
+//         },
+//       }, async (injectionResults) => {
+//         // Fetch API key and GPT model from storage
+//         chrome.storage.sync.get(['openAIKey', 'gptModel'], async (data) => {
+//           const apiKey = data.openAIKey;
+//           const model = data.gptModel || 'text-davinci-003'; // Default model
+
+//           if (!apiKey) {
+//             console.error('API key is not set. Please set the API key in the options page.');
+//             return;
+//           }
+
+//           for (const frameResult of injectionResults) {
+//             console.log("frameResult.result", frameResult.result)
+//             // Check if we have valid transcript text
+//             if (frameResult.result) {
+//               try {
+//                 const notes = await generateNotes(frameResult.result, apiKey, model, tabId);
+//                 sendResponse({ transcript: frameResult.result, notes: notes });
+//               } catch (error) {
+//                 console.error('Error generating notes:', error);
+//               }
+//             } else {
+//               sendResponse({ notes: "Transcript not found." }); // Inform popup that the transcript was not available
+//             }
+//           }
+//         });
+//       });
+//     });
+//     return true; // Indicates asynchronous response
+//   }
+// });
+
+// ------------------
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//     if (message.action === "generateNotes") {
+//         const tabId = sender.tab ? sender.tab.id : tabs[0].id; // Capture the current tab ID
+//         const gptModel = message.gptModel; // Use the model from the message payload
+
+//         chrome.scripting.executeScript({
+//             target: { tabId: tabId },
+//             function: () => {
+//                 // Extract transcript from the page
+//                 const xpath = '//*[@id="ct-sidebar-scroll-container"]/div';
+//                 let element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+//                 if (element && Array.from(element.classList).some(cls => cls.includes('transcript'))) {
+//                     let transcript = element.innerText;
+//                     transcript = transcript.replace(/\n\s*\n/g, '\n').trim();
+//                     return transcript;
+//                 } else {
+//                     return null;
+//                 }
+//             },
+//         }, async (injectionResults) => {
+//             chrome.storage.sync.get(['openAIKey'], async (data) => {
+//                 const apiKey = data.openAIKey;
+
+//                 if (!apiKey) {
+//                     console.error('API key is not set. Please set the API key in the options page.');
+//                     return;
+//                 }
+
+//                 for (const frameResult of injectionResults) {
+//                     if (frameResult.result) {
+//                         try {
+//                             const notes = await generateNotes(frameResult.result, apiKey, gptModel, tabId);
+//                             sendResponse({ transcript: frameResult.result, notes: notes });
+//                         } catch (error) {
+//                             console.error('Error generating notes:', error);
+//                         }
+//                     } else {
+//                         sendResponse({ notes: "Transcript not found." });
+//                     }
+//                 }
+//             });
+//         });
+
+//         return true; // Indicates asynchronous response
+//     }
+// });
+
+// -------------------
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "generateNotes") {
+        // Use chrome.tabs.query to safely obtain the tabId
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const tabId = sender.tab ? sender.tab.id : (tabs.length > 0 ? tabs[0].id : null);
+
+            if (!tabId) {
+                console.error('No active tab found to execute script.');
+                sendResponse({ notes: "Error: No active tab found." });
+                return;
+            }
+
+            const courseUrl = message.url; // Assuming message.url holds the URL
+
+            // Check if the transcript already exists in storage
+            getTranscript(courseUrl).then(transcript => {
+                if (transcript) {
+                    console.log("Transcript found in storage, generating notes...");
+                    generateNotesAndRespond(transcript, message.gptModel, tabId, sendResponse);
+                } else {
+                    console.log("Transcript not found in storage, extracting from page...");
+                    extractTranscriptFromPage(tabId, (transcriptText) => {
+                        if (transcriptText) {
+                            // Save the extracted transcript
+                            saveTranscript(courseUrl, transcriptText);
+                            generateNotesAndRespond(transcriptText, message.gptModel, tabId, sendResponse);
+                        } else {
+                            sendResponse({ notes: "Transcript not found." });
+                        }
+                    });
+                }
+            }).catch(error => {
+                console.error('Error checking transcript in storage:', error);
+                sendResponse({ notes: "Error accessing transcript storage." });
+            });
+        });
+
+        return true; // Indicates asynchronous response
+    }
+});
+
+function extractTranscriptFromPage(tabId, callback) {
+    chrome.scripting.executeScript({
         target: { tabId: tabId },
         function: () => {
-          // Extract transcript from the page
-          const xpath = '//*[@id="ct-sidebar-scroll-container"]/div';
-          let element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-          // Check if the element exists and includes the 'transcript' class
-          if (element && Array.from(element.classList).some(cls => cls.includes('transcript'))) {
-            return element.innerText; // Return transcript text
-          } else {
-            return null; // Return null if transcript not found
-          }
-        },
-      }, async (injectionResults) => {
-        // Fetch API key and GPT model from storage
-        chrome.storage.sync.get(['openAIKey', 'gptModel'], async (data) => {
-          const apiKey = data.openAIKey;
-          const model = data.gptModel || 'text-davinci-003'; // Default model
+            const xpath = '//*[@id="ct-sidebar-scroll-container"]/div';
+            let element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
-          if (!apiKey) {
-            console.error('API key is not set. Please set the API key in the options page.');
-            return;
-          }
-
-          for (const frameResult of injectionResults) {
-            console.log("frameResult.result",frameResult.result)
-            // Check if we have valid transcript text
-            if (frameResult.result) {
-              try {
-                const notes = await generateNotes(frameResult.result, apiKey, model, tabId); 
-                sendResponse({ notes: notes });
-              } catch (error) {
-                console.error('Error generating notes:', error);
-              }
+            if (element && Array.from(element.classList).some(cls => cls.includes('transcript'))) {
+                let transcript = element.innerText;
+                transcript = transcript.replace(/\n\s*\n/g, '\n').trim();
+                return transcript;
             } else {
-              sendResponse({ notes: "Transcript not found." }); // Inform popup that the transcript was not available
+                return null;
             }
-          }
-        });
-      });
+        },
+    }, (injectionResults) => {
+        const transcript = injectionResults[0]?.result;
+        callback(transcript);
     });
-    return true; // Indicates asynchronous response
-  }
-});
+}
+
+function generateNotesAndRespond(transcriptText, gptModel, tabId, sendResponse) {
+    chrome.storage.sync.get(['openAIKey'], async (data) => {
+        const apiKey = data.openAIKey;
+
+        if (!apiKey) {
+            console.error('API key is not set. Please set the API key in the options page.');
+            sendResponse({ notes: "API key not set." });
+            return;
+        }
+
+        try {
+            const notes = await generateNotes(transcriptText, apiKey, gptModel, tabId);
+            sendResponse({ transcript: transcriptText, notes: notes });
+        } catch (error) {
+            console.error('Error generating notes:', error);
+            sendResponse({ notes: "Error generating notes." });
+        }
+    });
+}
+
+// Function to get the transcript for a given URL
+function getTranscript(url) {
+    return new Promise((resolve) => {
+        chrome.storage.local.get(['transcripts'], (data) => {
+            const transcripts = data.transcripts || {};
+            resolve(transcripts[url] || null);
+        });
+    });
+}
+
+// Function to save the transcript for a given URL
+function saveTranscript(url, transcript) {
+    chrome.storage.local.get(['transcripts'], (data) => {
+        const transcripts = data.transcripts || {};
+        transcripts[url] = transcript;
+        chrome.storage.local.set({ transcripts }, () => {
+            console.log(`Transcript saved for ${url}`);
+        });
+    });
+}
